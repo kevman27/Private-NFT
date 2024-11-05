@@ -1,72 +1,32 @@
-// scripts/mint.js
-
 // Import necessary modules from Hardhat and SwisstronikJS
 const hre = require("hardhat");
-const { encryptDataField, decryptNodeResponse } = require("@swisstronik/utils");
-
-// Function to send a shielded transaction using the provided signer, destination, data, and value
-const sendShieldedTransaction = async (signer, destination, data, value) => {
-  // Get the RPC link from the network configuration
-  const rpcLink = hre.network.config.url;
-
-  // Encrypt transaction data
-  const [encryptedData] = await encryptDataField(rpcLink, data);
-
-  // Construct and sign transaction with encrypted data
-  return await signer.sendTransaction({
-    from: signer.address,
-    to: destination,
-    data: encryptedData,
-    value,
-  });
-};
+const { SwisstronikPlugin } = require("@swisstronik/web3-plugin-swisstronik");
+hre.web3.registerPlugin(new SwisstronikPlugin(hre.network.config.url));
 
 async function main() {
-  const replace_contractAddress = "0x8a50E5D72B891370A79532E473907b92a87F7214";
-  const [signer] = await hre.ethers.getSigners();
-  const replace_contractFactory = await hre.ethers.getContractFactory(
-    "KvToken"
-  );
-  const contract = replace_contractFactory.attach(replace_contractAddress);
-
-  const replace_functionName = "mint";
-  const replace_functionArgs = [
-    "0x8Ab77353aC866B7Ab690890e620c249A8D3e92D0",
-    "100000000000000000000",
-  ]; // 100 tokens with 18 decimal places
-
-  const amountMinted = hre.ethers.formatEther(replace_functionArgs[1]); // Converts to human-readable format (100 tokens)
-  console.log(`Minting ${amountMinted} tokens...`);
-
+  const replace_contractAddress = "0xdc94B70eF632B530c8ae92A9E964B594Bed963Db";
+  const [from] = await hre.web3.eth.getAccounts();
+  const contractFactory = await hre.ethers.getContractFactory("TestNFT");
+  const ABI = JSON.parse(contractFactory.interface.formatJson());
+  const contract = new hre.web3.eth.Contract(ABI, replace_contractAddress);
+  const replace_functionArgs = "0x1Ff31Ae882ccF4CDaB8ba8f95B53023452E42f70"; // Recipient address
+  console.log("Minting 1 token...");
   try {
-    const transaction = await sendShieldedTransaction(
-      signer,
-      replace_contractAddress,
-      contract.interface.encodeFunctionData(
-        replace_functionName,
-        replace_functionArgs
-      ),
-      0
-    );
-    console.log(`Transaction submitted! Transaction hash: ${transaction.hash}`);
-    await transaction.wait();
-
+    console.log(from, "from");
+    const transaction = await contract.methods
+      .safeMint(replace_functionArgs)
+      .send({ from });
+    console.log("Transaction submitted! Transaction details:", transaction);
+    // Display success message with recipient address
     console.log(
-      `Transaction completed successfully! ${amountMinted} tokens minted to ${replace_functionArgs[0]}.`
+      `Transaction completed successfully! ✅ Non-Fungible Token minted to ${replace_functionArgs}`
     );
-    console.log(`Transaction hash: ${transaction.hash}`);
+    console.log("Transaction hash:", transaction.transactionHash);
   } catch (error) {
-    console.error(`Transaction failed! Could not mint ${amountMinted} tokens.`);
-    console.error(
-      `Transaction hash: ${
-        error.transactionHash ? error.transactionHash : "N/A"
-      }`
-    );
+    console.error(`Transaction failed! Could not mint NFT.`);
     console.error(error);
   }
 }
-
-// Using async/await pattern to handle errors properly
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
