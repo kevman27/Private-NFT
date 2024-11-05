@@ -1,32 +1,31 @@
 // Import necessary modules from Hardhat and SwisstronikJS
-const hre = require("hardhat");
+const { network, web3 } = require("hardhat");
+const {
+  abi,
+} = require("../artifacts/contracts/PERC20Sample.sol/PERC20Sample.json");
 const { SwisstronikPlugin } = require("@swisstronik/web3-plugin-swisstronik");
-hre.web3.registerPlugin(new SwisstronikPlugin(hre.network.config.url));
 
 async function main() {
-  const replace_contractAddress = "0xdc94B70eF632B530c8ae92A9E964B594Bed963Db";
-  const [from] = await hre.web3.eth.getAccounts();
-  const contractFactory = await hre.ethers.getContractFactory("TestNFT");
-  const ABI = JSON.parse(contractFactory.interface.formatJson());
-  const contract = new hre.web3.eth.Contract(ABI, replace_contractAddress);
-  const replace_functionArgs = "0x1Ff31Ae882ccF4CDaB8ba8f95B53023452E42f70"; // Recipient address
-  console.log("Minting 1 token...");
-  try {
-    console.log(from, "from");
-    const transaction = await contract.methods
-      .safeMint(replace_functionArgs)
-      .send({ from });
-    console.log("Transaction submitted! Transaction details:", transaction);
-    // Display success message with recipient address
-    console.log(
-      `Transaction completed successfully! ✅ Non-Fungible Token minted to ${replace_functionArgs}`
-    );
-    console.log("Transaction hash:", transaction.transactionHash);
-  } catch (error) {
-    console.error(`Transaction failed! Could not mint NFT.`);
-    console.error(error);
-  }
+  // Register the Swisstronik plugin
+  web3.registerPlugin(new SwisstronikPlugin(network.config.url));
+
+  // Address of the deployed contract
+  const contractAddress = "0xE8e17c3D9b88bab305a6F5669ac12D26F7f3B3c3";
+
+  // Get the signer (your account)
+  const [from] = await web3.eth.getAccounts();
+  console.log("Minting 100 tokens using account", from);
+
+  // Create a contract instance
+  const contract = new web3.eth.Contract(abi, contractAddress);
+
+  // Call the mint function
+  const mint100TokensTx = await contract.methods.mint().send({ from });
+
+  console.log("Transaction Receipt: ", mint100TokensTx);
 }
+
+// Using async/await pattern to handle errors properly
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
