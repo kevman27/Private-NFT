@@ -1,31 +1,37 @@
-// Import necessary modules from Hardhat and SwisstronikJS
 const { network, web3 } = require("hardhat");
 const {
   abi,
-} = require("../artifacts/contracts/PERC20Sample.sol/PERC20Sample.json");
+} = require("../artifacts/contracts/PrivateERC721.sol/PrivateERC721.json");
 const { SwisstronikPlugin } = require("@swisstronik/web3-plugin-swisstronik");
+const fs = require("fs");
 
 async function main() {
   // Register the Swisstronik plugin
   web3.registerPlugin(new SwisstronikPlugin(network.config.url));
 
-  // Address of the deployed contract
-  const contractAddress = "0xE8e17c3D9b88bab305a6F5669ac12D26F7f3B3c3";
+  // Replace with your deployed contract address
+  const contractAddress = fs.readFileSync("contract.txt", "utf8").trim();
 
-  // Get the signer (your account)
+  // Get the accounts
   const [from] = await web3.eth.getAccounts();
-  console.log("Minting 100 tokens using account", from);
 
-  // Create a contract instance
+  // Create contract instance
   const contract = new web3.eth.Contract(abi, contractAddress);
 
-  // Call the mint function
-  const mint100TokensTx = await contract.methods.mint().send({ from });
+  // Specify the token ID you want to mint
+  const tokenId = 1; // Adjust the token ID as needed
 
-  console.log("Transaction Receipt: ", mint100TokensTx);
+  // Mint the token
+  const mintTx = await contract.methods.mint(from, tokenId).send({ from });
+
+  // Log the transaction details
+  console.log("Transaction hash:", mintTx.transactionHash);
+  console.log("Transaction submitted! Transaction details:", mintTx);
+  console.log(
+    `Transaction completed successfully! ✅ Token ID: ${tokenId} minted to ${from}`
+  );
 }
 
-// Using async/await pattern to handle errors properly
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
